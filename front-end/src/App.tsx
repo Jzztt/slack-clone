@@ -1,28 +1,44 @@
-import { SignedIn, SignedOut } from "@clerk/clerk-react";
-import { Navigate, Route, Routes } from "react-router";
-import Home from "./pages/Home";
-import Auth from "./pages/Auth";
+import { useAuth } from "@clerk/clerk-react";
 import * as Sentry from "@sentry/react";
+import { Navigate, Route, Routes } from "react-router";
+import Auth from "./pages/Auth";
+import CallPage from "./pages/CallPage";
+import Home from "./pages/Home";
 const SentryRoutes = Sentry.withSentryReactRouterV7Routing(Routes);
 
 const App = () => {
+  const { isSignedIn, isLoaded } = useAuth();
+
+  if (!isLoaded) return null;
 
   return (
     <>
-    <button onClick={() => {throw new Error("Error")}}> Throw Error</button>
-      <SignedIn>
-        <SentryRoutes>
-          <Route path="/" element={<Home />}></Route>
-          <Route path="/auth" element={<Navigate to="/" replace />}></Route>
-        </SentryRoutes>
-      </SignedIn>
+      <SentryRoutes>
+        <Route
+          path="/"
+          element={isSignedIn ? <Home /> : <Navigate to="/auth" replace />}
+        ></Route>
+        <Route
+          path="/auth"
+          element={!isSignedIn ? <Auth /> : <Navigate to="/" replace />}
+        ></Route>
 
-      <SignedOut>
-        <SentryRoutes>
-          <Route path="/auth" element={<Auth />}></Route>
-          <Route path="*" element={<Navigate to="/auth" replace />}></Route>
-        </SentryRoutes>
-      </SignedOut>
+        <Route
+          path="/call/:id"
+          element={isSignedIn ? <CallPage /> : <Navigate to="/auth" replace />}
+        ></Route>
+
+        <Route
+          path="*"
+          element={
+            isSignedIn ? (
+              <Navigate to="/" replace />
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          }
+        ></Route>
+      </SentryRoutes>
     </>
   );
 };
